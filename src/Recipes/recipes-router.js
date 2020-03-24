@@ -38,7 +38,7 @@ recipesRouter
     logger.info(`note with id ${recipe.id} has been created.`);
     res.status(201)
       .location(`/api/recipes/${recipe.id}`)
-      .json(serializeNote(recipe));
+      .json(serializeRecipe(recipe));
   })
   .catch(next);
 });

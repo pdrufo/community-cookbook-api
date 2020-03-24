@@ -2,7 +2,9 @@ const recipesService = {
 
   getAllRecipes(knex) {
     return knex
-    .select('*')
+    .join('instructions', 'recipe_id', '=', 'instructions.recipe_id')
+    .join('ingredients', 'recipe_id', '=', 'ingredients.recipe_id')
+    .select('title', 'ingredients', 'instructions', 'source')
     .from('recipes')
   },
 

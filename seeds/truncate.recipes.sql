@@ -1,3 +1,3 @@
 TRUNCATE
-recipes
+recipes, ingredients, instructions
 RESTART IDENTITY CASCADE; 
