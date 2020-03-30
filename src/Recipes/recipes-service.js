@@ -2,16 +2,12 @@ const recipesService = {
 
   getAllRecipes(knex) {
     return knex
-    .join('instructions', 'recipes.id', '=', 'instructions.recipe_id')
-    .join('ingredients', 'recipes.id', '=', 'ingredients.recipe_id')
-    .select('title', 'ingredients', 'instructions', 'source')
+    .select('*')
     .from('recipes')
   },
 
   insertRecipe(db, newRecipe) {
     return db
-    .join('instructions', 'recipes.id', '=', 'instructions.recipe_id')
-    .join('ingredients', 'recipes.id', '=', 'ingredients.recipe_id')
       .insert(newRecipe)
       .into('recipes')
       .returning('*')
