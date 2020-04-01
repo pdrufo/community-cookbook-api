@@ -27,9 +27,8 @@ recipesRouter
 })
 .post(bodyParser, (req,res,next) => {
   const {title, ingredients, instructions, source} = req.body;
-
   if (!title || !ingredients || !instructions || !source) {
-    logger.error('Title, instructions, ingredients and source are required')
+    logger.error('title, instructions, ingredients and source are required')
   }
   const newRecipe = {title, ingredients, instructions, source};
 
@@ -52,7 +51,7 @@ recipesRouter
           logger.error(`recipe with id ${id} not found`);
           return res
             .status(404)
-            .send('recipe not found');
+            .json({ error: { message: `Recipe doesn't exist` }});
         }
         res.recipe = recipe;
         next();

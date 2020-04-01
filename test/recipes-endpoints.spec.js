@@ -1,157 +1,192 @@
 const knex = require('knex');
 const app = require('../src/app');
-const { makeRecipesArray } = require('./recipes.fixtures');
+const { makeRecipesArray, makeMaliciousRecipe } = require('./recipes.fixtures');
+
 
 describe('Recipes Endpoints', function() {
-  let db;
+  let db
 
   before('make knex instance', () => {
     db = knex({
       client: 'pg',
-      connection: process.env.TEST_DB_URL,
+      connection: process.env.TEST_DATABASE_URL,
     })
     app.set('db', db)
-  });
+  })
 
-  after('disconnect from db', () => db.destroy());
-  before('clean the table', () => db('cookbook').truncate());
-  afterEach('cleanup',() => db('cookbook').truncate());
+  after('disconnect from db', () => db.destroy())
 
-  // get recipes
+  before('clean the table', () => db('recipes').truncate())
+
+  afterEach('cleanup',() => db('recipes').truncate())
+
   describe(`GET /api/recipes`, () => {
     context(`Given no recipes`, () => {
-      it(`Responds with 200 and empty list`, () => {
+      it(`responds with 200 and an empty list`, () => {
         return supertest(app)
           .get('/api/recipes')
           .expect(200, [])
       })
-    });
+    })
 
-    context(`Given recipes in database`, () => {
-      const testRecipes = makeRecipesArray();
+    context('Given there are recipes in the database', () => {
+      const testRecipes = makeRecipesArray()
 
-      beforeEach(`Insert Recipes`, () => {
+      beforeEach('insert recipes', () => {
         return db
           .into('recipes')
           .insert(testRecipes)
       })
 
-      it('Responds with 200 and get all store', () => {
+      it('responds with 200 and all of the recipes', () => {
         return supertest(app)
           .get('/api/recipes')
           .expect(200, testRecipes)
       })
-    });
+    })
 
-  });
+    context(`Given an XSS attack recipe`, () => {
+      const { maliciousRecipe, expectedRecipe } = makeMaliciousRecipe()
 
-  // get api recipes with id
-  describe(`GET /api/recipes/:id`, () => {
-    context(`Given no food recipes`, () => {
-      it(`Responds with 404`, () => {
-        const RecipesId = 123456;
+      beforeEach('insert malicious recipe', () => {
+        return db
+          .into('recipes')
+          .insert([ maliciousRecipe ])
+      })
 
+      it('removes XSS attack content', () => {
         return supertest(app)
-          .get(`/api/recipes/${RecipesId}`)
-          .expect(404, {
-            error: {
-              message: `Recipe doesn't exist`
-            }
+          .get(`/api/recipes`)
+          .expect(200)
+          .expect(res => {
+            expect(res.body[0].title).to.eql(expectedRecipe.title)
+            expect(res.body[0].content).to.eql(expectedRecipe.content)
           })
       })
-    });
+    })
+  })
 
-    // give recipes data into database
-    context(`Given recipes in database`, () => {
-      const testRecipes = makeRecipesArray();
+  describe(`GET /api/recipes/:id`, () => {
+    context(`Given no recipes`, () => {
+      it(`responds with 404`, () => {
+        const recipeId = 123456
+        return supertest(app)
+          .get(`/api/recipes/${recipeId}`)
+          .expect(404, { error: { message: `Recipe doesn't exist` } })
+      })
+    })
 
-      beforeEach(`Insert Food Recipes`, () => {
+    context('Given there are recipes in the database', () => {
+      const testRecipes = makeRecipesArray()
+
+      beforeEach('insert recipes', () => {
         return db
           .into('recipes')
           .insert(testRecipes)
       })
 
-      it('Responds with 200 and specified food recipes', () => {
-        const RecipesId = 2;
-        const expectedRecipes = testRecipes[RecipesId - 1];
-
+      it('responds with 200 and the specified recipe', () => {
+        const recipeId = 2
+        const expectedRecipe = testRecipes[recipeId - 1]
         return supertest(app)
-          .get(`/api/recipes/${RecipesId}`)
-          .expect(200, expectedRecipes)
+          .get(`/api/recipes/${recipeId}`)
+          .expect(200, expectedRecipe)
       })
     })
 
-  });
+    context(`Given an XSS attack recipe`, () => {
+      const { maliciousRecipe, expectedRecipe } = makeMaliciousRecipe()
 
-  // post recipes
+      beforeEach('insert malicious recipe', () => {
+        return db
+          .into('recipes')
+          .insert([ maliciousRecipe ])
+      })
+
+      it('removes XSS attack content', () => {
+        return supertest(app)
+          .get(`/api/recipes/${maliciousRecipe.id}`)
+          .expect(200)
+          .expect(res => {
+            expect(res.body.title).to.eql(expectedRecipe.title)
+            expect(res.body.content).to.eql(expectedRecipe.content)
+          })
+      })
+    })
+  })
+
   describe(`POST /api/recipes`, () => {
-    it(`Creates recipes with 201 responds and add new recipe`, function() {
+    it(`creates a recipe, responding with 201 and the new recipe`, () => {
       const newRecipe = {
-        title: 'recipe title',
-        ingredients: 'recipe ingredients',
-        instructions: 'recipe instruction',
-        source: 'recipe source'
-      };
-
+        title: 'Test new recipe',
+        ingredients: 'Test new recipe ingredients',
+        instructions: 'Test new recipe instructions',
+        source: 'Test new recipe source'
+      }
       return supertest(app)
         .post('/api/recipes')
         .send(newRecipe)
         .expect(201)
         .expect(res => {
-          expect(res.body).to.have.property('id')
           expect(res.body.title).to.eql(newRecipe.title)
           expect(res.body.ingredients).to.eql(newRecipe.ingredients)
           expect(res.body.instructions).to.eql(newRecipe.instructions)
           expect(res.body.source).to.eql(newRecipe.source)
+          expect(res.body).to.have.property('id')
           expect(res.headers.location).to.eql(`/api/recipes/${res.body.id}`)
         })
-        .then(res => 
+        .then(res =>
           supertest(app)
             .get(`/api/recipes/${res.body.id}`)
             .expect(res.body)
         )
-    });
+    })
 
-    const requiredFields = ['title', 'ingredients', 'instructions', 'source'];
+    const requiredFields = ['title', 'ingredients', 'instructions', 'source']
 
     requiredFields.forEach(field => {
       const newRecipe = {
-        title: 'Test recipe title',
-        ingredients: 'Test recipe ingredients',
-        instructions: 'Test recipe instructions',
-        source: "Test recipe source"
+        title: 'Test new recipe',
+        ingredients: 'Test new recipe ingredients',
+        instructions: 'Test new recipe instructions',
+        source: 'Test new recipe source'
       }
 
-      it(`response wiht 400 and an error message when somthing missing`, () => {
+      it(`responds with 500 and an error message when the '${field}' is missing`, () => {
         delete newRecipe[field]
-        
+
         return supertest(app)
-        .post('/api/recipes')
-        .send(newRecipe)
-        .expect(400, {
-          error: { message: `Missing ${field}` }
-        })
+          .post('/api/recipes')
+          .send(newRecipe)
+          .expect(500)
       })
     })
 
-  });
+    it('removes XSS attack content from response', () => {
+      const { maliciousRecipe, expectedRecipe } = makeMaliciousRecipe()
+      return supertest(app)
+        .post(`/api/recipes`)
+        .send(maliciousRecipe)
+        .expect(201)
+        .expect(res => {
+          expect(res.body.title).to.eql(expectedRecipe.title)
+          expect(res.body.content).to.eql(expectedRecipe.content)
+        })
+    })
+  })
 
-  //delete api recipes with id
   describe(`DELETE /api/recipes/:id`, () => {
-    context(`Given no recipes in the database`, () => {
+    context(`Given no articles`, () => {
       it(`responds with 404`, () => {
-        const RecipesId = 123456;
+        const recipeId = 123456
         return supertest(app)
-          .delete(`/api/recipes/${RecipesId}`)
-          .expect(404, {
-            error: { message: `Recipe doesn't exist`}
-          })
+          .delete(`/api/recipes/${recipeId}`)
+          .expect(404, { error: { message: `Recipe doesn't exist` } })
       })
-    });
+    })
 
-    // insert recipes able to delete
     context('Given there are recipes in the database', () => {
-      const testRecipes= makeRecipesArray();
+      const testRecipes = makeRecipesArray()
 
       beforeEach('insert recipes', () => {
         return db
@@ -159,71 +194,36 @@ describe('Recipes Endpoints', function() {
           .insert(testRecipes)
       })
 
-      it('get recipes from store with 204', () => {
-        const idToRemove = 5;
-        const expectedRecipes = testRecipes.filter(recipe => recipe.id !== idToRemove)
-        
-        return supertest(app)
-          .delete(`/api/recipes/${idToRemove}`)
-          .expect(204)
-          .then(res =>
-            supertest(app)
-              .get(`/api/recipes`)
-              .expect(expectedRecipes)
-          )
-      })
-    });
+    })
+  })
 
-  });
-
-  // patch 
   describe(`PATCH /api/recipes/:id`, () => {
-    context(`Given no recipes in the database`, () => {
+    context(`Given no recipes`, () => {
       it(`responds with 404`, () => {
-        const RecipesId = 123456;
+        const recipeId = 123456
         return supertest(app)
-          .delete(`/api/recipes/${RecipesId}`)
-          .expect(404, {
-            error: { message: `Food Recipes doesn't exist`}
-          })
+          .delete(`/api/recipes/${recipeId}`)
+          .expect(404, { error: { message: `Recipe doesn't exist` } })
       })
-    });
+    })
 
-    // insert recipes able to patch
-    context('Given there are articles in the database', () => {
-      const testRecipes = makeRecipesArray();
-      
+    context('Given there are recipes in the database', () => {
+      const testRecipes = makeRecipesArray()
+
       beforeEach('insert recipes', () => {
         return db
           .into('recipes')
           .insert(testRecipes)
       })
 
-      it('Responds wtih 204 and update recipe', () => {
-        const idToUpdate = 4;
-        const testRecipes = makeRecipesArray();
-        const updateRecipe = {
-          title: 'Update recipe title',
-          ingredients: 'Update recipe ingredients',
-          instructions: 'Update recipe instructions',
-          source: 'Update recipe source'
-        };
-        const expectedRecipes = {
-          ...testRecipes[idToUpdate - 1],
-          ...updateRecipe
-        };
-
+      it(`responds with 500 when no required fields supplied`, () => {
+        const idToUpdate = 2
         return supertest(app)
           .patch(`/api/recipes/${idToUpdate}`)
-          .send(updateRecipe)
-          .expect(204)
-          .then(res => 
-            supertest(app)
-              .get(`/api/recipes/${idToUpdate}`)
-              .expect(expectedRecipes)
-          )
-      });
-    });
-  });
+          .send({ irrelevantField: 'foo' })
+          .expect(500)
+      })
 
-});
+    })
+  })
+})

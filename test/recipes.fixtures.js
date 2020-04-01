@@ -23,4 +23,27 @@ function makeRecipesArray() {
     },
   ]
 }; 
-module.exports = {makeRecipesArray};
+
+function makeMaliciousRecipe() {
+  const maliciousRecipe = {
+    id: 911,
+    title: 'Naughty naughty very naughty <script>alert("xss");</script>',
+    ingredients: 'bad stuff',
+    instructions: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Enim nunc faucibus a pellentesque sit amet porttitor eget dolor. Eget gravida cum sociis natoque penatibus et magnis dis. Eu facilisis sed odio morbi quis commodo.',
+    source: 'not grandma'
+    
+  }
+  const expectedRecipe = {
+    ...maliciousRecipe,
+    title: 'Naughty naughty very naughty &lt;script&gt;alert(\"xss\");&lt;/script&gt;',
+    ingredients: 'bad stuff',
+    instructions: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Enim nunc faucibus a pellentesque sit amet porttitor eget dolor. Eget gravida cum sociis natoque penatibus et magnis dis. Eu facilisis sed odio morbi quis commodo.',
+    source: 'not grandma'
+    
+  }
+  return {
+    maliciousRecipe,
+    expectedRecipe,
+  }
+}
+module.exports = {makeRecipesArray, makeMaliciousRecipe};
