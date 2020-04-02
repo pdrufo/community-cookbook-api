@@ -3,5 +3,6 @@ CREATE TABLE recipes (
   title TEXT NOT NULL,
   ingredients TEXT NOT NULL,
   instructions TEXT NOT NULL,
-  source TEXT NOT NULL
+  source TEXT NOT NULL,
+  photo_url TEXT NOT NULL
 );
