@@ -183,3 +183,5 @@
 {"message":"note with id 1 has been created.","level":"info"}
 {"message":"recipe with id 123456 not found","level":"error"}
 {"message":"recipe with id 123456 not found","level":"error"}
+{"message":"note with id 4 has been created.","level":"info"}
+{"message":"recipe with id 4 deleted","level":"info"}
