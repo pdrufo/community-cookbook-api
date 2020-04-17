@@ -1,26 +1,23 @@
-# Express Boilerplate!
+# Community Cookbook
+Welcome to the Community Cookbook. A place where users can browse some of my favorite recipes, whether they are a weeknight go-to or dinner party ready. Users may also post some of their favorite recipes too. Hopefully, we'll never be stuck again on the question "What's for dinner"?
 
-This is a boilerplate project used for starting new projects
+## Live Version
+https://community-cookbook-client.pdrufo.now.sh/
 
-## Set up
+## Front End
+https://github.com/pdrufo/community-cookbook-client
 
-Complete the following steps to start a new project (NEW-PROJECT-NAME):
+## Technologies Used
+Front-End: ReactJS | CSS <br/>
+Back-End: NodeJS | KnexJS | ExpressJS | PostgreSQL <br/>
+Testing: Mocha | Chai <br/>
 
-1. Clone this repository to your local machine `git clone BOILERPLATE-URL NEW-PROJECTS-NAME`
-2. `cd` into the cloned repository
-3. Make a fresh start of the git history for this project with `rm -rf .git && git init`
-4. Install the node dependencies `npm install`
-5. Move the example Environment file to `.env` that will be ignored by git and read by the express server `mv example.env .env`
-6. Edit the contents of the `package.json` to use NEW-PROJECT-NAME instead of `"name": "express-boilerplate",`
+## Screenshots
+Mobile
+![Mobile](https://github.com/pdrufo/community-cookbook-client/blob/master/src/Images/mobile.png) 
 
-## Scripts
+Tablet
+![Tablet](https://github.com/pdrufo/community-cookbook-client/blob/master/src/Images/tablet.png) 
 
-Start the application `npm start`
-
-Start nodemon for the application `npm run dev`
-
-Run the tests `npm test`
-
-## Deploying
-
-When your new project is ready for deployment, add a new Heroku application with `heroku create`. This will make a new git remote called "heroku" and you can then `npm run deploy` which will push to this remote's master branch.
+Desktop
+![Desktop](https://github.com/pdrufo/community-cookbook-client/blob/master/src/Images/desktop.png) 
